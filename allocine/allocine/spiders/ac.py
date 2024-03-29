@@ -42,7 +42,7 @@ class AcSpider(scrapy.Spider):
                                   wait_time=10)
 
     @logger.catch
-    def get_next_page(self, response):
+    def get_next_page_url(self, response):
         if '?page=' not in response.url:
             next_page = 2
         else:
