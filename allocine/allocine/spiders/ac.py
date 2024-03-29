@@ -38,7 +38,7 @@ class AcSpider(scrapy.Spider):
 
     @logger.catch
     def get_next_page(self, response):
-        if '?page=' in response.url:
+        if '?page=' not in response.url:
             next_page = 2
         else:
             current_page = int(response.url.split('page=')[-1])
