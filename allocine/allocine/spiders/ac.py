@@ -25,7 +25,7 @@ class AcSpider(scrapy.Spider):
 
         for link in film_links:
             item = FilmItem()
-            item["film_id"] = re.search(r'\d{6}', link)
+            item['film_id'] = re.search(r'\d{6}', link)
             main_page_url = f"{BASE_URL}{link}"
 
             # Follow the main film page
@@ -79,7 +79,7 @@ class AcSpider(scrapy.Spider):
         item["synopsis"] = response.css("section#synopsis-details div.content-txt p::text").get()
 
         # Follow the casting page
-        casting_page_url = f"{BASE_URL}/film/fichefilm-{item["film_id"]}/casting/"
+        casting_page_url = f"{BASE_URL}/film/fichefilm-{item['film_id']}/casting/"
         yield SeleniumRequest(casting_page_url, self.parse_casting_page, meta={'item': item}, wait_time=10)
 
     @logger.catch
@@ -91,7 +91,7 @@ class AcSpider(scrapy.Spider):
         item["societies"] = societies_fields.css("div.md-table-row span.link::text").getall()
 
         # Follow the box office page
-        box_office_page_url = f"{BASE_URL}/film/fichefilm-{item["film_id"]}/box-office/"
+        box_office_page_url = f"{BASE_URL}/film/fichefilm-{item['film_id']}/box-office/"
         yield SeleniumRequest(box_office_page_url, self.parse_box_office_page, meta={'item': item}, wait_time=10)
 
     @logger.catch
