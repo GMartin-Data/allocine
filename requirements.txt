@@ -1,3 +1,4 @@
 bpython<1
 loguru<1
 scrapy<3
+scrapy-selenium<1
