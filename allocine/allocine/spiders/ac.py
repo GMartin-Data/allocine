@@ -9,6 +9,9 @@ from allocine.items import FilmItem
 
 BASE_URL = "https://allocine.fr"
 
+logs_path = 'logs/logfile.log'
+logger.add(logs_path, level="ERROR")
+
 class AcSpider(scrapy.Spider):
     name = "ac"
     allowed_domains = ['allocine.fr']
@@ -56,6 +59,8 @@ class AcSpider(scrapy.Spider):
     
     @logger.catch
     def parse_main_page(self, response):
+        if response.status != 200:
+            logger.error(f"Non 200 Status Code: {response.status_code} for URL {response.url}")
         item = response.meta["item"]
         item["title"] = response.css("div.titlebar-title::text").get()
         item["img_src"] = response.css("[title^='Bande-'] > img::attr(src)").get()
@@ -95,6 +100,8 @@ class AcSpider(scrapy.Spider):
 
     @logger.catch
     def parse_casting_page(self, response):
+        if response.status != 200:
+            logger.error(f"Non 200 Status Code: {response.status} for URL {response.url}")
         item = response.meta["item"]
         item["director"] = response.css('section.casting-director a::text').get()
         item["casting"] = response.css('section.casting-actor a::text').getall()
@@ -110,6 +117,8 @@ class AcSpider(scrapy.Spider):
 
     @logger.catch
     def parse_box_office_page(self, response):
+        if response.status != 200:
+            logger.error(f"Non 200 Status Code: {response.status} for URL {response.url}")
         item = response.meta["item"]
         tab = response.css('td[data-heading="Entrées"]::text')
         try:
