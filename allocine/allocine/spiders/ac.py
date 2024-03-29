@@ -25,7 +25,7 @@ class AcSpider(scrapy.Spider):
 
         for link in film_links:
             item = FilmItem()
-            item['film_id'] = re.search(r'\d{6}', link).group()
+            item['film_id'] = re.search(r'\d{5,6}', link).group()
             main_page_url = f"{BASE_URL}{link}"
 
             # Follow the main film page
@@ -38,6 +38,7 @@ class AcSpider(scrapy.Spider):
         next_page_url = self.get_next_page_url(response)
         if next_page_url:
             logger.info(f"{next_page_url = }")
+            input("=====> Continue?...")
             yield SeleniumRequest(url=next_page_url,
                                   callback=self.parse_films,
                                   wait_time=10)
