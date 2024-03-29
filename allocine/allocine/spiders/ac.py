@@ -25,7 +25,7 @@ class AcSpider(scrapy.Spider):
 
         for link in film_links:
             item = FilmItem()
-            item['film_id'] = re.search(r'\d{6}', link)
+            item['film_id'] = re.search(r'\d{6}', link).group()
             main_page_url = f"{BASE_URL}{link}"
 
             # Follow the main film page
