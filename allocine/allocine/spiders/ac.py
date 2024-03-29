@@ -22,10 +22,11 @@ class AcSpider(scrapy.Spider):
     def parse_films(self, response):
         # Extract films links
         film_links = response.css("h2.meta-title a::attr(href)").getall()
+        logger.info(f"o/ from parse_films! nb of films to scrape: {len(film_links)}")
 
         for link in film_links:
             item = FilmItem()
-            item['film_id'] = re.search(r'\d{5,6}', link).group()
+            item['film_id'] = re.search(r'\d+', link).group()
             main_page_url = f"{BASE_URL}{link}"
 
             # Follow the main film page
@@ -37,8 +38,8 @@ class AcSpider(scrapy.Spider):
         # Handle pagination
         next_page_url = self.get_next_page_url(response)
         if next_page_url:
-            logger.info(f"{next_page_url = }")
-            input("=====> Continue?...")
+            logger.debug(f"{next_page_url = }")
+            # input("Quitting parse_films... =====> Continue?...")
             yield SeleniumRequest(url=next_page_url,
                                   callback=self.parse_films,
                                   wait_time=10)
