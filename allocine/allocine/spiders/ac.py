@@ -29,12 +29,17 @@ class AcSpider(scrapy.Spider):
             main_page_url = f"{BASE_URL}{link}"
 
             # Follow the main film page
-            yield SeleniumRequest(main_page_url, self.parse_main_page, meta={'item': item}, wait_time=10)
+            yield SeleniumRequest(url=main_page_url,
+                                  callback=self.parse_main_page,
+                                  meta={'item': item},
+                                  wait_time=10)
 
         # Handle pagination
         next_page_url = self.get_next_page_url(response)
         if next_page_url:
-            yield SeleniumRequest(next_page_url, callback=self.parse_films, wait_time=10)
+            yield SeleniumRequest(url=next_page_url,
+                                  callback=self.parse_films,
+                                  wait_time=10)
 
     @logger.catch
     def get_next_page(self, response):
@@ -80,7 +85,10 @@ class AcSpider(scrapy.Spider):
 
         # Follow the casting page
         casting_page_url = f"{BASE_URL}/film/fichefilm-{item['film_id']}/casting/"
-        yield SeleniumRequest(casting_page_url, self.parse_casting_page, meta={'item': item}, wait_time=10)
+        yield SeleniumRequest(url=casting_page_url,
+                              callback=self.parse_casting_page, 
+                              meta={'item': item},
+                              wait_time=10)
 
     @logger.catch
     def parse_casting_page(self, response):
@@ -92,7 +100,10 @@ class AcSpider(scrapy.Spider):
 
         # Follow the box office page
         box_office_page_url = f"{BASE_URL}/film/fichefilm-{item['film_id']}/box-office/"
-        yield SeleniumRequest(box_office_page_url, self.parse_box_office_page, meta={'item': item}, wait_time=10)
+        yield SeleniumRequest(url=box_office_page_url, 
+                              callback=self.parse_box_office_page,
+                              meta={'item': item},
+                              wait_time=10)
 
     @logger.catch
     def parse_box_office_page(self, response):
