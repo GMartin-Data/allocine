@@ -37,6 +37,7 @@ class AcSpider(scrapy.Spider):
         # Handle pagination
         next_page_url = self.get_next_page_url(response)
         if next_page_url:
+            logger.info(f"{next_page_url = }")
             yield SeleniumRequest(url=next_page_url,
                                   callback=self.parse_films,
                                   wait_time=10)
@@ -48,7 +49,7 @@ class AcSpider(scrapy.Spider):
         else:
             current_page = int(response.url.split('page=')[-1])
             next_page = current_page + 1
-        next_page_url = f'{self.start_urls}?page={next_page}'
+        next_page_url = f'{self.start_urls[0]}?page={next_page}'
         return next_page_url
     
     @logger.catch
