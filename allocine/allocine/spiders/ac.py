@@ -4,6 +4,8 @@ from loguru import logger
 import scrapy
 from scrapy_selenium import SeleniumRequest
 
+from allocine.items import FilmItem
+
 
 BASE_URL = "https://allocine.fr"
 
@@ -14,31 +16,25 @@ class AcSpider(scrapy.Spider):
 
     def start_requests(self):
         url = self.start_urls[0]
-        yield SeleniumRequest(url=url, callback=self.parse, wait_time=10)
-
+        yield SeleniumRequest(url=url, callback=self.parse_films, wait_time=10)
 
     @logger.catch
-    def parse(self, response):
+    def parse_films(self, response):
         # Extract films links
         film_links = response.css("h2.meta-title a::attr(href)").getall()
 
         for link in film_links:
-            film_id = re.search(r'\d{6}', link)
+            item = FilmItem()
+            item["film_id"] = re.search(r'\d{6}', link)
             main_page_url = f"{BASE_URL}{link}"
-            casting_page_url = f"{BASE_URL}/film/fichefilm-{film_id}/casting/"
-            box_office_page_url = f"{BASE_URL}/film/fichefilm-{film_id}/box-office/"
 
             # Follow the main film page
-            yield SeleniumRequest(main_page_url, self.parse_main_page, meta={'film_id': film_id}, wait_time=10)
-            # Follow the casting page
-            yield SeleniumRequest(casting_page_url, self.parse_casting_page, meta={'film_id': film_id}, wait_time=10)
-            # Follow the box office page
-            yield SeleniumRequest(box_office_page_url, self.parse_box_office_page, meta={'film_id': film_id}, wait_time=10)
+            yield SeleniumRequest(main_page_url, self.parse_main_page, meta={'item': item}, wait_time=10)
 
         # Handle pagination
         next_page_url = self.get_next_page_url(response)
         if next_page_url:
-            yield SeleniumRequest(next_page_url, callback=self.parse, wait_time=10)
+            yield SeleniumRequest(next_page_url, callback=self.parse_films, wait_time=10)
 
     @logger.catch
     def get_next_page(self, response):
@@ -52,23 +48,58 @@ class AcSpider(scrapy.Spider):
     
     @logger.catch
     def parse_main_page(self, response):
-        title = response.css("div.titlebar-title::text").get()
-        img_src = response.css("[title^='Bande-'] > img::attr(src)").get()
-        
+        item = response.meta["item"]
+        item["title"] = response.css("div.titlebar-title::text").get()
+        item["img_src"] = response.css("[title^='Bande-'] > img::attr(src)").get()
+
+        # release, duration, genres
+        raw_info = response.css('div.meta-body-info ::text').getall()
+        info = [item.strip('\n') for item in raw_info if item not in ('\nen salle\n', '|', '\n', ',\n')]
+        try:
+            item["release"] = info[0]
+        except BaseException as e:
+            item["release"] = None
+        try:
+            item["duration"] = info[1]
+        except BaseException as e:
+            item["duration"] = None
+        item["genres"] = info[2:]  # A slice never raises an exception
+
+        # Ratings press & viewers
         ratings = response.css("span.stareval-note::text").getall()
-        press_ratings = ratings[0]
-        specs_ratings = ratings[1]
+        try:
+            item["press_ratings"] = ratings[0]
+        except BaseException as e:
+            item["press_ratings"] = None
+        try:
+            item["viewers_ratings"] = ratings[1]
+        except BaseException as e:
+            item["viewers_ratings"] = None
 
-        synopsis = response.css("p.bo-p::text").get()
-        
+        item["synopsis"] = response.css("section#synopsis-details div.content-txt p::text").get()
 
-
-
+        # Follow the casting page
+        casting_page_url = f"{BASE_URL}/film/fichefilm-{item["film_id"]}/casting/"
+        yield SeleniumRequest(casting_page_url, self.parse_casting_page, meta={'item': item}, wait_time=10)
 
     @logger.catch
     def parse_casting_page(self, response):
-        pass
+        item = response.meta["item"]
+        item["director"] = response.css('section.casting-director a::text').get()
+        item["casting"] = response.css('section.casting-actor a::text').getall()
+        societies_fields = response.css('div.gd-col-left div.casting-list-gql')[-1]
+        item["societies"] = societies_fields.css("div.md-table-row span.link::text").getall()
+
+        # Follow the box office page
+        box_office_page_url = f"{BASE_URL}/film/fichefilm-{item["film_id"]}/box-office/"
+        yield SeleniumRequest(box_office_page_url, self.parse_box_office_page, meta={'item': item}, wait_time=10)
 
     @logger.catch
     def parse_box_office_page(self, response):
-        pass
+        item = response.meta["item"]
+        tab = response.css('td[data-heading="Entrées"]::text')
+        try:
+            item["entries"] = tab[0].get().strip()
+        except BaseException as e:
+            item["entries"] = None
+        yield item
