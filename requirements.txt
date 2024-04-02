@@ -1,4 +1,5 @@
 bpython<1
+jupyterlab<5
 loguru<1
 scrapy<3
 scrapy-selenium<1
