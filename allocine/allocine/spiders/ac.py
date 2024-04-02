@@ -67,7 +67,7 @@ class AcSpider(scrapy.Spider):
 
         # release, duration, genres
         raw_info = response.css('div.meta-body-info ::text').getall()
-        info = [item.strip('\n') for item in raw_info if item not in ('\nen salle\n', '|', '\n', ',\n')]
+        info = [item.strip('\n') for item in raw_info if item not in ('\nen DVD\n', '\nen salle\n', '|', '\n', ',\n')]
         try:
             item["release"] = info[0]
         except BaseException as e:
