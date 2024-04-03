@@ -11,7 +11,7 @@ from itemadapter import ItemAdapter
 from loguru import logger
 
 
-SET_FIELDS = ("genres", "casting")
+SET_FIELDS = ("genres", "casting", "director")
 INTEGER_FIELDS = ("film_id", "entries")
 FLOAT_FIELDS = ("press_ratings", "viewers_ratings")
 
