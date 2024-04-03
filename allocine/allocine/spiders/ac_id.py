@@ -83,7 +83,7 @@ class AcIdSpider(scrapy.Spider):
         if response.status != 200:
             logger.error(f"Non 200 Status Code: {response.status} for URL {response.url}")
         item = response.meta["item"]
-        item["director"] = response.css('section.casting-director a::text').get()
+        item["director"] = response.css('section.casting-director a::text').getall()
         item["casting"] = response.css('section.casting-actor a::text').getall()
         societies_fields = response.css('div.gd-col-left div.casting-list-gql')[-1]
         item["societies"] = societies_fields.css("div.md-table-row span.link::text").getall()
