@@ -20,3 +20,8 @@ class FilmItem(scrapy.Item):
     casting = scrapy.Field()
     societies = scrapy.Field()
     entries = scrapy.Field()
+
+
+class BoxOfficeItem(scrapy.Item):
+    film_id = scrapy.Field()
+    entries = scrapy.Field()
