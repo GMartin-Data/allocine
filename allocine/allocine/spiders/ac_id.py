@@ -47,8 +47,10 @@ class AcIdSpider(scrapy.Spider):
 
         # release, duration, genres
         raw_info = response.css('div.meta-body-info ::text').getall()
+        TO_SKIP = ('\nen VOD\n', '\nen DVD\n', '\nen salle\n', '|', '\n', ',\n',
+                   '\nen salle\net\nen VOD\n', '\nen salle\net\nen DVD\n')
         info = [item.strip('\n') for item in raw_info
-                if item not in ('\nen VOD\n', '\nen DVD\n', '\nen salle\n', '|', '\n', ',\n')]
+                if item not in TO_SKIP]
         try:
             item["release"] = info[0]
         except BaseException:
@@ -59,18 +61,11 @@ class AcIdSpider(scrapy.Spider):
             item["duration"] = None
         item["genres"] = info[2:]  # A slice never raises an exception
 
-        # Ratings press & viewers
-        ratings = response.css("span.stareval-note::text").getall()
-        try:
-            item["press_ratings"] = ratings[0]
-        except BaseException:
-            item["press_ratings"] = None
-        try:
-            item["viewers_ratings"] = ratings[1]
-        except BaseException:
-            item["viewers_ratings"] = None
-
         item["synopsis"] = response.css("section#synopsis-details div.content-txt p::text").get()
+        item["nationality"] = response.css("span.nationality::text").getall()
+        # Budget
+        budget_span = response.xpath("//span[contains(text(), 'Budget')]")
+        item["budget"] = budget_span.xpath('.//following-sibling::node()/text()').get()       
 
         # Follow the casting page
         casting_page_url = f"{BASE_URL}/film/fichefilm-{item['film_id']}/casting/"
