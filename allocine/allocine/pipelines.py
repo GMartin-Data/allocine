@@ -11,9 +11,8 @@ from itemadapter import ItemAdapter
 from loguru import logger
 
 
-SET_FIELDS = ("genres", "casting", "director")
-INTEGER_FIELDS = ("film_id", "entries")
-FLOAT_FIELDS = ("press_ratings", "viewers_ratings")
+LIST_FIELDS = ("casting", "director", "genres", "nationality")
+SET_FIELDS = ("societies", )
 
 
 def convert_duration(duration: str) -> Optional[int]:
@@ -25,17 +24,18 @@ def convert_duration(duration: str) -> Optional[int]:
     minutes = int(duration[1].replace("min", ""))
     return (60 * hours + minutes)
 
+
 class AcIdCleanPipeline:
     @logger.catch
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
 
-        for field in FLOAT_FIELDS:
+        for field in LIST_FIELDS:
             value = adapter.get(field)
-            if value not in ("--", None):
-                value = value.replace(",", ".")
-                adapter[field] = float(value)
-            else:
+            try:
+                value = [item.strip() for item in value]
+                adapter[field] = "|".join(value)
+            except BaseException:
                 adapter[field] = None
 
         for field in SET_FIELDS:
@@ -43,7 +43,7 @@ class AcIdCleanPipeline:
             try:
                 value = set(item.strip() for item in value)
                 adapter[field] = "|".join(value)
-            except BaseException as e:
+            except BaseException:
                 adapter[field] = None
 
         # Special case of duration
